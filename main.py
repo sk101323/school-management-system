@@ -1,9 +1,33 @@
 import tkinter as tk
 from tkinter import messagebox
 
+
 root = tk.Tk()
 root.title("School Management System")
 root.geometry("500x500")
+
+
+root.grid_rowconfigure(0, weight=1)  # Allow row 0 to expand
+root.grid_rowconfigure(5, weight=1)  # Allow row 3 to expand
+root.grid_columnconfigure(0, weight=1)  # Allow column 0 to expand
+root.grid_columnconfigure(9, weight=1)  # Allow column 5 to expand
+
+
+
+def main_page():
+    # Clear all widgets from the root window
+    for widget in root.winfo_children():
+        widget.destroy()
+
+    # Add the Admin and Teacher buttons back to the main page
+    button1 = tk.Button(root, text="Admin", bg="blue", width=12, command=admin_action, fg="white")
+    button1.grid(row=0, column=2)
+
+    button2 = tk.Button(root, text="Teacher", bg="red", width=12, command=teacher_action, fg="white")
+    button2.grid(row=1, column=2)
+
+
+
 
 def admin_action():
     
@@ -31,6 +55,10 @@ def admin_action():
     submit_button.pack(pady=10)
 
 
+    back_button = tk.Button(root, text = "back" , command=main_page)
+    back_button.pack(pady=10)
+
+
 
 
 def admin_interface():
@@ -56,6 +84,9 @@ def admin_interface():
     show_analytics = tk.Button(button_frame, text="Show Analytics", command=lambda: messagebox.showinfo("Info", "Analytics"))
     show_analytics.grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
 
+    back_button = tk.Button(root, text = "back" , command=admin_action)
+    back_button.pack(pady=10)
+
     # Configure the columns and rows to expand proportionally
     button_frame.grid_columnconfigure(0, weight=1)
     button_frame.grid_columnconfigure(1, weight=1)
@@ -70,12 +101,17 @@ def teacher_action():
     # Add content for the Teacher section
     label_teacher = tk.Label(root, text="Welcome, Teacher!")
     label_teacher.pack(pady=10)
+    
+    back_button = tk.Button(root, text = "back" , command=main_page)
+    back_button.pack(pady=10)
+
 
 # Buttons in the main window
-button1 = tk.Button(root, text="Admin", bg="blue", command=admin_action, fg="white")
-button1.pack(pady=20)
+button1 = tk.Button(root, text="Admin", bg="blue", width=12, command=admin_action, fg="white")
+button1.grid(row=0, column=2)
 
-button2 = tk.Button(root, text="Teacher", bg="red", command=teacher_action, fg="white")
-button2.pack(pady=20)
+button2 = tk.Button(root, text="Teacher", bg="red", width=12, command=teacher_action, fg="white")
+button2.grid(row=1, column=2)
+
 
 root.mainloop()
