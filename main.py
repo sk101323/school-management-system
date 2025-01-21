@@ -3,6 +3,8 @@ from tkinter import messagebox
 from tkinter import ttk
 import mysql.connector
 
+
+#-------------------connection of database-----------------------
 def insert_teacher_data():
     """Insert teacher data into the database."""
     # Retrieve values from entry fields
@@ -59,62 +61,56 @@ def fetch_data():
         print(f"Error connecting to MySQL: {e}")
         return []
 
-root = tk.Tk()
-root.title("School Management System")
-root.geometry("1000x1000")
-root.config(bg="Light Blue")
-
-root.grid_rowconfigure(0, weight=1)  # Allow row 0 to expand
-root.grid_rowconfigure(5, weight=1)  # Allow row 3 to expand
-root.grid_columnconfigure(0, weight=1)  # Allow column 0 to expand
-root.grid_columnconfigure(9, weight=1)  # Allow column 5 to expand
+# -------------------------------------------------------------------------------
 
 
 
-def main_page():
-    # Clear all widgets from the root window
-    for widget in root.winfo_children():
-        widget.destroy()
 
-    # Add the Admin and Teacher buttons back to the main page
-    button1 = tk.Button(root, text="Admin", bg="blue", width=12, command=admin_action, fg="white")
-    button1.grid(row=0, column=2)
 
-    button2 = tk.Button(root, text="Teacher", bg="red", width=12, command=teacher_action, fg="white")
-    button2.grid(row=1, column=2)
 
-def admin_action():
+
     
+
+
+
+def teacher_action():
+    # Use the same root window and clear it
     for widget in root.winfo_children():
         widget.destroy()
     
-    # Add a label
-    label1 = tk.Label(root, text="Enter user name:")
-    label1.pack(pady=10)
-
-    # Add an entry box
-    entry = tk.Entry(root, width=30)
-    entry.pack(pady=10)
-
-    # Add a label
-    label2 = tk.Label(root, text="Enter Password:")
-    label2.pack(pady=10)
-
-    # Add an entry box
-    entry = tk.Entry(root, width=30,show="*")
-    entry.pack(pady=10)
-
-    # Add a submit button
-    submit_button = tk.Button(root, text="Submit", command=admin_interface)
-    submit_button.pack(pady=10)
-
+    # Add content for the Teacher section
+    label_teacher = tk.Label(root, text="Welcome, Teacher!")
+    label_teacher.pack(pady=10)
+    
     back_button = tk.Button(root, text="back", command=main_page)
     back_button.pack(pady=10)
 
-   
-table_frame = tk.Frame(root, bg="lightblue")
-table_frame.grid(row=0, column=0, pady=10)
 
+
+
+# ----------------------teacher record button in admin interface----------------------
+def show_teacher_record():
+    for widget in root.winfo_children():
+        widget.destroy()
+    
+    tk.Label(root, text="Teacher Records", font=("Arial", 14), bg="Light Blue").pack(pady=10)
+    columns = ("ID", "Name", "Contact_no", "Email_Address", "Class", "Subject","tuser_name","tpassword")
+    table = ttk.Treeview(root, columns=columns, show="headings", height=15)
+    
+    for col in columns:
+        table.heading(col, text=col)
+        table.column(col, anchor="center", width=100)
+    table.pack(expand=True, fill="both", padx=10, pady=10)
+    
+    # Populate Table
+    data = fetch_data()
+    for record in data:
+        table.insert("", "end", values=record)
+
+    tk.Button(root, text="Edit Record", command=edit_record).pack(pady=10)
+    tk.Button(root, text="Back", command=admin_interface).pack(pady=10)
+
+# ---------------- edit teacher record--------------------
 def edit_record():
     for widget in root.winfo_children():
         widget.destroy()
@@ -182,33 +178,8 @@ def edit_record():
     back_button = tk.Button(root, text="Back", command=admin_interface)
     back_button.pack(pady=10)
 
-    
 
-
-def show_teacher_record():
-    for widget in root.winfo_children():
-        widget.destroy()
-    
-    tk.Label(root, text="Teacher Records", font=("Arial", 14), bg="Light Blue").pack(pady=10)
-    columns = ("ID", "Name", "Contact_no", "Email_Address", "Class", "Subject","tuser_name","tpassword")
-    table = ttk.Treeview(root, columns=columns, show="headings", height=15)
-    
-    for col in columns:
-        table.heading(col, text=col)
-        table.column(col, anchor="center", width=100)
-    table.pack(expand=True, fill="both", padx=10, pady=10)
-    
-    # Populate Table
-    data = fetch_data()
-    for record in data:
-        table.insert("", "end", values=record)
-
-    tk.Button(root, text="Edit Record", command=edit_record).pack(pady=10)
-    tk.Button(root, text="Back", command=admin_interface).pack(pady=10)
-
-    
-
-
+# ----------------------Show admin buttons---------------------
 def admin_interface():
     
     for widget in root.winfo_children():
@@ -232,8 +203,8 @@ def admin_interface():
     show_analytics = tk.Button(button_frame, text="Show Analytics", command=lambda: messagebox.showinfo("Info", "Analytics"))
     show_analytics.grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
 
-    back_button = tk.Button(root, text="back", command=main_page)
-    back_button.pack(pady=10)
+    back_button = tk.Button(root, text="back", command=admin_action)
+    back_button.grid(row=2, column=1, padx=10, pady=10, sticky="nsew")
 
     # Configure the columns and rows to expand proportionally
     button_frame.grid_columnconfigure(0, weight=1)
@@ -241,25 +212,71 @@ def admin_interface():
     button_frame.grid_rowconfigure(0, weight=1)
     button_frame.grid_rowconfigure(1, weight=1)
 
-def teacher_action():
-    # Use the same root window and clear it
+
+# ------------------admin credentials page-------------------
+def admin_action():
+    
     for widget in root.winfo_children():
         widget.destroy()
     
-    # Add content for the Teacher section
-    label_teacher = tk.Label(root, text="Welcome, Teacher!")
-    label_teacher.pack(pady=10)
-    
+    # Add a label
+    label1 = tk.Label(root, text="Enter user name:")
+    label1.pack(pady=10)
+
+    # Add an entry box
+    entry = tk.Entry(root, width=30)
+    entry.pack(pady=10)
+
+    # Add a label
+    label2 = tk.Label(root, text="Enter Password:")
+    label2.pack(pady=10)
+
+    # Add an entry box
+    entry = tk.Entry(root, width=30,show="*")
+    entry.pack(pady=10)
+
+    # Add a submit button
+    submit_button = tk.Button(root, text="Submit", command=admin_interface)
+    submit_button.pack(pady=10)
+
     back_button = tk.Button(root, text="back", command=main_page)
     back_button.pack(pady=10)
 
 
-# Buttons in the main window
-button1 = tk.Button(root, text="Admin", bg="blue", width=12, command=admin_action, fg="white")
-button1.grid(row=0, column=2)
 
-button2 = tk.Button(root, text="Teacher", bg="red", width=12, command=teacher_action, fg="white")
-button2.grid(row=1, column=2)
+
+def main_page():
+    # Clear all widgets from the root window
+    for widget in root.winfo_children():
+        widget.destroy()
+
+    # Add the Admin and Teacher buttons back to the main page
+    button1 = tk.Button(root, text="Admin", bg="blue", width=12, command=admin_action, fg="white")
+    button1.grid(row=0, column=2)
+
+    button2 = tk.Button(root, text="Teacher", bg="red", width=12, command=teacher_action, fg="white")
+    button2.grid(row=1, column=2)
+
+
+# Buttons in the main window
+root = tk.Tk()
+root.title("School Management System")
+root.geometry("1000x1000")
+root.config(bg="Light Blue")
+
+root.grid_rowconfigure(0, weight=1)  # Allow row 0 to expand
+root.grid_rowconfigure(5, weight=1)  # Allow row 3 to expand
+root.grid_columnconfigure(0, weight=1)  # Allow column 0 to expand
+root.grid_columnconfigure(9, weight=1)  # Allow column 5 to expand
+
+
+table_frame = tk.Frame(root, bg="lightblue")
+table_frame.grid(row=0, column=0, pady=10)
+
+ 
+button1 = tk.Button(root, text="Admin", bg="blue", width=12, command=admin_action, fg="white").grid(row=0, column=2)
+button2 = tk.Button(root, text="Teacher", bg="red", width=12, command=teacher_action, fg="white").grid(row=1, column=2)
+
 
 
 root.mainloop()
