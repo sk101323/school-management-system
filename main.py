@@ -210,17 +210,16 @@ def show_teacher_record():
 
 
 def admin_interface():
-    
+    # Clear all widgets from the root window
     for widget in root.winfo_children():
         widget.destroy()
-    
 
-     # Create a frame to hold the buttons and make the layout easier
+    # Create a frame to hold the buttons
     button_frame = tk.Frame(root)
-    button_frame.pack(expand=True)
-    
-    # Create buttons with lambda functions to show information 
-    show_teacher_record1 = tk.Button(button_frame, text="Show Teacher Record",command=show_teacher_record)
+    button_frame.pack(expand=True, pady=10)
+
+    # Create buttons for admin actions
+    show_teacher_record1 = tk.Button(button_frame, text="Show Teacher Record", command=show_teacher_record)
     show_teacher_record1.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
     show_student_record = tk.Button(button_frame, text="Show Student Record", command=lambda: messagebox.showinfo("Info", "Student Record"))
@@ -232,14 +231,16 @@ def admin_interface():
     show_analytics = tk.Button(button_frame, text="Show Analytics", command=lambda: messagebox.showinfo("Info", "Analytics"))
     show_analytics.grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
 
-    back_button = tk.Button(root, text="back", command=main_page)
-    back_button.pack(pady=10)
-
-    # Configure the columns and rows to expand proportionally
+    # Configure the frame's columns and rows to expand proportionally
     button_frame.grid_columnconfigure(0, weight=1)
     button_frame.grid_columnconfigure(1, weight=1)
     button_frame.grid_rowconfigure(0, weight=1)
     button_frame.grid_rowconfigure(1, weight=1)
+
+    # Add a Back button below the button frame
+    back_button = tk.Button(root, text="Back", command=admin_action)
+    back_button.pack(pady=10)
+
 
 def teacher_action():
     # Use the same root window and clear it
