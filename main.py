@@ -2,6 +2,10 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
 import mysql.connector
+from PIL import Image
+from io import BytesIO
+from PIL import Image, ImageTk
+import analtyics
 
 
 #-------------------connection of database-----------------------
@@ -61,17 +65,201 @@ def fetch_data():
         print(f"Error connecting to MySQL: {e}")
         return []
 
-# -------------------------------------------------------------------------------
-
-
-
-
-
-
-
+#---------------------------------------------------------------------
+def insert_students_data():
+    """Insert teacher data into the database."""
+    # Retrieve values from entry fields
+    sname = sname_entry.get()
+    sroll_no = roll_entry.get()
+    sclass = class_entry.get()
+    gender = gender_entry.get()
+    scontact_no = contactno_entry.get()
     
 
+    try:
+        # Connect to the database
+        conn = mysql.connector.connect(
+            host="localhost",  # Replace with your host
+            user="root",  # Replace with your MySQL username
+            password="",  # Replace with your MySQL password
+            database="sms"  # Replace with your database name
+        )
+        
+        cursor = conn.cursor()
+        
+        # Create an SQL query to insert the data into the teacher table
+        query = """
+        INSERT INTO students_data (sname,sroll_no, sclass, gender,scontact_no)
+        VALUES (%s, %s, %s, %s, %s)
+        """
+        values = (sname,sroll_no,sclass, gender,scontact_no)
+        
+        cursor.execute(query, values)
+        conn.commit()
+        
+        messagebox.showinfo("Success", "Students record inserted successfully!")
+        
+        conn.close()  # Close the connection
+    except mysql.connector.Error as e:
+        messagebox.showerror("Error", f"An error occurred: {e}")
 
+def students_fetch_data():
+    """Fetch data from the MySQL database."""
+    try:
+        conn = mysql.connector.connect(
+            host="localhost",  # Replace with your host
+            user="root",  # Replace with your MySQL username
+            password="",  # Replace with your MySQL password
+            database="sms"  # Replace with your database name
+        )
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM students_data")  # Replace with your table name
+        rows = cursor.fetchall()
+        conn.close()
+        return rows
+    except mysql.connector.Error as e:
+        print(f"Error connecting to MySQL: {e}")
+        return []
+ #---------------------------------------
+
+def get_image_from_database(image_name):
+    """
+    Fetch the image from the database based on the image name.
+    """
+    try:
+        connection = mysql.connector.connect(
+            host="localhost",
+            user="root",             # Replace with your MySQL username
+            password="",             # Replace with your MySQL password
+            database="image"         # Database name
+        )
+        cursor = connection.cursor()
+
+        # Since we only have one column, adjust the query accordingly
+        query = "SELECT image_column FROM image WHERE image_column = %s"
+        cursor.execute(query, (image_name,))
+        image_data = cursor.fetchone()
+
+        if image_data:
+            return image_data[0]
+        else:
+            return None
+
+    except mysql.connector.Error as error:
+        print(f"Error fetching image: {error}")
+        return None
+
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
+def display_image(image_id):
+    """Fetch and display an image stored in MySQL using image ID."""
+    for widget in root.winfo_children():
+        widget.destroy()
+    try:
+        # Connect to the database
+        connection = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="",
+            database="sms"
+        )
+        cursor = connection.cursor()
+        
+        # Query to fetch the image by its ID
+        query = "SELECT image_column FROM image WHERE id = %s"
+        cursor.execute(query, (image_id,))
+        image_data = cursor.fetchone()
+
+        # If the image exists, display it
+        if image_data and image_data[0]:
+            image = Image.open(BytesIO(image_data[0]))
+            image = ImageTk.PhotoImage(image)
+
+            # Display the image in a label
+            img_label = tk.Label(root, image=image)
+            img_label.image = image  # Keep a reference to avoid garbage collection
+            img_label.pack()
+        else:
+            messagebox.showerror("Error", f"Image with ID '{image_id}' not found!")
+
+    except mysql.connector.Error as error:
+        print(f"Error fetching image: {error}")
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+    tk.Button(root, text="Back", command=admin_interface).pack(pady=10)
+
+
+
+#----------------------------------------------------------------
+def convert_to_binary(filename):
+    """
+    Converts the image file into binary data.
+    """
+    with open(filename, 'rb') as file:
+        return file.read()
+
+def save_image_to_database(image_id, image_name):
+    
+    """
+    Save an image to an existing database.
+    """
+    try:
+        # Connect to the MySQL database on localhost
+        connection = mysql.connector.connect(
+            host="localhost",
+            user="root",         # Replace with your MySQL username
+            password="",     # Replace with your MySQL password
+            database="sms" # Replace with your database name
+        )
+        cursor = connection.cursor()
+
+        # Insert the image into the existing table
+        # Replace `your_table_name` with the actual table name
+        # Replace `image_column` and `name_column` with your table's column names
+        query = """
+        INSERT INTO image(image_column) 
+        VALUES (%s)
+        """
+        binary_data = convert_to_binary(image_id)
+        cursor.execute(query, (binary_data))
+
+        # Commit the transaction
+        connection.commit()
+        print(f"Image '{image_name}' successfully saved to the database!")
+
+    except mysql.connector.Error as error:
+        print(f"Error saving image to the database: {error}")
+    
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+            print("MySQL connection closed.")
+
+
+#-------------------------------------------------------------------------------
+def image():
+    global image_id, image_name
+    for widget in root.winfo_children():
+        widget.destroy()
+
+    image_id = r"D:\Python  Work\school-management-system\time1.jpg"
+    image_name = "time1.jpg" 
+    
+             
+
+    # Save the image to the database
+    save_image_to_database(image_id, image_name)
+
+
+
+
+# -------------------------------------------------------------------------------
 
 def teacher_action():
     # Use the same root window and clear it
@@ -85,8 +273,79 @@ def teacher_action():
     back_button = tk.Button(root, text="back", command=main_page)
     back_button.pack(pady=10)
 
+def show_student_record():
+    for widget in root.winfo_children():
+        widget.destroy()
+    
+    tk.Label(root, text="Students Records", font=("Arial", 14), bg="Light Blue").pack(pady=10)
+    columns = ("sname",'sroll_no', "sclass",'gender','scontact_no')
+    table = ttk.Treeview(root, columns=columns, show="headings", height=15)
+    
+    for col in columns:
+        table.heading(col, text=col)
+        table.column(col, anchor="center", width=100)
+    table.pack(expand=True, fill="both", padx=10, pady=10)
+    
+    # Populate Table
+    data = students_fetch_data()
+    for record in data:
+        table.insert("", "end", values=record)
+
+    tk.Button(root, text="Edit Record", command=edit_students_record).pack(pady=10)
+    tk.Button(root, text="Back", command=admin_interface).pack(pady=10)
+
+# ---------------- edit teacher record--------------------
+def edit_students_record():
+    for widget in root.winfo_children():
+        widget.destroy()
+
+    sname = tk.Label(root, text="Enter students name:")
+    sname.pack(pady=10)
+
+    # Add an entry box
+    global sname_entry
+    sname_entry = tk.Entry(root, width=30)
+    sname_entry.pack(pady=10)
+
+    sroll_no = tk.Label(root, text="Enter Roll No:")
+    sroll_no.pack(pady=10)
+
+    # Add an entry box
+    global roll_entry
+    roll_entry = tk.Entry(root, width=30)
+    roll_entry.pack(pady=10)
+
+    sclass = tk.Label(root, text="Enter Class:")
+    sclass.pack(pady=10)
+
+    # Add an entry box
+    global class_entry
+    class_entry = tk.Entry(root, width=30)
+    class_entry.pack(pady=10)
+
+    sgender = tk.Label(root, text="Enter Gender")
+    sgender.pack(pady=10)
+
+    # Add an entry box
+    global gender_entry
+    gender_entry = tk.Entry(root, width=30)
+    gender_entry.pack(pady=10)
+
+    scontact = tk.Label(root, text="Enter Contact no")
+    scontact.pack(pady=10)
+
+    # Add an entry box
+    global contactno_entry
+    contactno_entry = tk.Entry(root, width=30)
+    contactno_entry.pack(pady=10)
 
 
+    # Add "Save" button to insert data into the database
+    save_button = tk.Button(root, text="Save Students Data", command=insert_students_data)
+    save_button.pack(pady=10)
+
+    back_button = tk.Button(root, text="Back", command=show_student_record)
+    back_button.pack(pady=10)
 
 # ----------------------teacher record button in admin interface----------------------
 def show_teacher_record():
@@ -181,29 +440,34 @@ def edit_record():
 
 # ----------------------Show admin buttons---------------------
 def admin_interface():
-    # Clear all widgets from the root window
+    global image_id, image_name
+    
     for widget in root.winfo_children():
         widget.destroy()
+    
 
-    # Create a frame to hold the buttons
+     # Create a frame to hold the buttons and make the layout easier
     button_frame = tk.Frame(root)
-    button_frame.pack(expand=True, pady=10)
-
-    # Create buttons for admin actions
-    show_teacher_record1 = tk.Button(button_frame, text="Show Teacher Record", command=show_teacher_record)
+    button_frame.pack(expand=True)
+    
+    # Create buttons with lambda functions to show information 
+    show_teacher_record1 = tk.Button(button_frame, text="Show Teacher Record",command=show_teacher_record)
     show_teacher_record1.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
-    show_student_record = tk.Button(button_frame, text="Show Student Record", command=lambda: messagebox.showinfo("Info", "Student Record"))
-    show_student_record.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
+    tshow_student_record = tk.Button(button_frame, text="Show Student Record", command=show_student_record)
+    tshow_student_record.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
 
-    show_time_table = tk.Button(button_frame, text="Show Time Table", command=lambda: messagebox.showinfo("Info", "Time Table"))
+    show_time_table = tk.Button(button_frame, text="Show Time Table", command=lambda: display_image(1))
     show_time_table.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
+    
+    show_time_table = tk.Button(button_frame, text="Time Table Save", command=lambda:save_image_to_database(image_id, image_name))
+    show_time_table.grid(row=3,column=0, padx=10, pady=10, sticky="nsew")
 
-    show_analytics = tk.Button(button_frame, text="Show Analytics", command=lambda: messagebox.showinfo("Info", "Analytics"))
+    show_analytics = tk.Button(button_frame, text="Show Analytics", command=analtyics.pie_chart)
     show_analytics.grid(row=1, column=1, padx=10, pady=10, sticky="nsew")
 
-    back_button = tk.Button(root, text="back", command=main_page)
-    back_button.pack(pady=10)
+    #back_button = tk.Button(root, text="back", command=admin_action)
+    #back_button.grid(row=2, column=1, padx=10, pady=10, sticky="nsew")
 
     # Configure the columns and rows to expand proportionally
     button_frame.grid_columnconfigure(0, weight=1)
@@ -211,8 +475,10 @@ def admin_interface():
     button_frame.grid_rowconfigure(0, weight=1)
     button_frame.grid_rowconfigure(1, weight=1)
 
-def teacher_action():
-    # Use the same root window and clear it
+
+# ------------------admin credentials page-------------------
+def admin_action():
+    
     for widget in root.winfo_children():
         widget.destroy()
     
@@ -258,7 +524,7 @@ def main_page():
 # Buttons in the main window
 root = tk.Tk()
 root.title("School Management System")
-root.geometry("1000x1000")
+root.geometry("1650x1000")
 root.config(bg="Light Blue")
 
 root.grid_rowconfigure(0, weight=1)  # Allow row 0 to expand
