@@ -1,13 +1,14 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, filedialog
 from tkinter import ttk
 import mysql.connector
 from PIL import Image
 from io import BytesIO
 from PIL import Image, ImageTk
 import analtyics
+import os
 
-
+image_id= None
 #-------------------connection of database-----------------------
 def insert_teacher_data():
     """Insert teacher data into the database."""
@@ -131,12 +132,12 @@ def get_image_from_database(image_name):
             host="localhost",
             user="root",             # Replace with your MySQL username
             password="",             # Replace with your MySQL password
-            database="image"         # Database name
+            database="sms"         # Database name
         )
         cursor = connection.cursor()
 
         # Since we only have one column, adjust the query accordingly
-        query = "SELECT image_column FROM image WHERE image_column = %s"
+        query = "SELECT image FROM school_images WHERE image = %s"
         cursor.execute(query, (image_name,))
         image_data = cursor.fetchone()
 
@@ -155,106 +156,107 @@ def get_image_from_database(image_name):
             connection.close()
 
 def display_image(image_id):
-    """Fetch and display an image stored in MySQL using image ID."""
     for widget in root.winfo_children():
         widget.destroy()
     try:
-        # Connect to the database
+        # Connect to MySQL database
         connection = mysql.connector.connect(
             host="localhost",
             user="root",
-            password="",
-            database="sms"
+            password="",  # Replace with your MySQL password
+            database="sms"  # Replace with your database name
         )
         cursor = connection.cursor()
-        
-        # Query to fetch the image by its ID
-        query = "SELECT image_column FROM image WHERE id = %s"
+
+        # Query to fetch the image path based on image_id
+        query = "SELECT image FROM school_images WHERE id = %s"
         cursor.execute(query, (image_id,))
-        image_data = cursor.fetchone()
+        result = cursor.fetchone()
 
-        # If the image exists, display it
-        if image_data and image_data[0]:
-            image = Image.open(BytesIO(image_data[0]))
-            image = ImageTk.PhotoImage(image)
+        if result:
+            image = result[0]
+            print(f"Image path fetched: {image}")  # Debugging: Print the image path
 
-            # Display the image in a label
-            img_label = tk.Label(root, image=image)
-            img_label.image = image  # Keep a reference to avoid garbage collection
-            img_label.pack()
+            # Check if the file exists
+            if os.path.exists(image):
+                # Open and display the image
+                display_image_window(image)
+            else:
+                messagebox.showerror("Error", f"Image file does not exist: {image}")
         else:
-            messagebox.showerror("Error", f"Image with ID '{image_id}' not found!")
+            messagebox.showerror("Error", f"No image found with ID {image_id}!")
 
     except mysql.connector.Error as error:
-        print(f"Error fetching image: {error}")
+        print(f"Error fetching image from database: {error}")
+
     finally:
         if connection.is_connected():
             cursor.close()
             connection.close()
-    tk.Button(root, text="Back", command=admin_interface).pack(pady=10)
+    #tk.Button(root, text="Back", command=admin_interface).pack(pady=10)
+
+def display_image_window(image):
+    try:
+        # Create a window to display the image
+        img = Image.open(image)  # Open the image
+        img = img.resize((400, 400))  # Resize for display, if needed
+
+        # Convert the image to a Tkinter-compatible format
+        img_tk = ImageTk.PhotoImage(img)
+
+        # Add the image to a Tkinter label and pack it into the window
+        label = tk.Label(root, image=img_tk)
+        #label.image = img_tk  # Keep a reference to avoid garbage collection
+        label.pack()
+
+    except Exception as e:
+        messagebox.showerror("Error", f"Could not open the image: {e}")
 
 
 
 #----------------------------------------------------------------
-def convert_to_binary(filename):
-    """
-    Converts the image file into binary data.
-    """
-    with open(filename, 'rb') as file:
-        return file.read()
+def save_image_to_database():
+    # Open a file dialog to select an image
+    file_path = filedialog.askopenfilename(
+        title="Select Image",
+        filetypes=[("Image Files", "*.png;*.jpg;*.jpeg;*.bmp;*.gif")]
+    )
 
-def save_image_to_database(image_id, image_name):
-    
-    """
-    Save an image to an existing database.
-    """
+    if not file_path:
+        print("No image selected.")
+        return
+
     try:
-        # Connect to the MySQL database on localhost
+        # Connect to MySQL database
         connection = mysql.connector.connect(
             host="localhost",
-            user="root",         # Replace with your MySQL username
-            password="",     # Replace with your MySQL password
-            database="sms" # Replace with your database name
+            user="root",
+            password="",  # Replace with your MySQL password
+            database="sms"  # Replace with your database name
         )
+        
+
+        # Commit the deletion
+        connection.commit()
         cursor = connection.cursor()
 
-        # Insert the image into the existing table
-        # Replace `your_table_name` with the actual table name
-        # Replace `image_column` and `name_column` with your table's column names
-        query = """
-        INSERT INTO image(image_column) 
-        VALUES (%s)
-        """
-        binary_data = convert_to_binary(image_id)
-        cursor.execute(query, (binary_data))
 
-        # Commit the transaction
+        # Insert the image file path into the database
+        query = "INSERT INTO school_images (image) VALUES (%s)" 
+        cursor.execute(query, (file_path,))
         connection.commit()
-        print(f"Image '{image_name}' successfully saved to the database!")
+
 
     except mysql.connector.Error as error:
         print(f"Error saving image to the database: {error}")
-    
+
     finally:
         if connection.is_connected():
             cursor.close()
             connection.close()
             print("MySQL connection closed.")
 
-
 #-------------------------------------------------------------------------------
-def image():
-    global image_id, image_name
-    for widget in root.winfo_children():
-        widget.destroy()
-
-    image_id = r"D:\Python  Work\school-management-system\time1.jpg"
-    image_name = "time1.jpg" 
-    
-             
-
-    # Save the image to the database
-    save_image_to_database(image_id, image_name)
 
 
 
@@ -440,7 +442,7 @@ def edit_record():
 
 # ----------------------Show admin buttons---------------------
 def admin_interface():
-    global image_id, image_name
+    
     
     for widget in root.winfo_children():
         widget.destroy()
@@ -460,7 +462,7 @@ def admin_interface():
     show_time_table = tk.Button(button_frame, text="Show Time Table", command=lambda: display_image(1))
     show_time_table.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
     
-    show_time_table = tk.Button(button_frame, text="Time Table Save", command=lambda:save_image_to_database(image_id, image_name))
+    show_time_table = tk.Button(button_frame, text="Time Table Save", command=save_image_to_database)
     show_time_table.grid(row=3,column=0, padx=10, pady=10, sticky="nsew")
 
     show_analytics = tk.Button(button_frame, text="Show Analytics", command=analtyics.pie_chart)
