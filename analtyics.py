@@ -42,6 +42,7 @@ def pie_chart():
     window.title("Genders")
     window.geometry("1650x1000")
     window.config(bg="Light Blue")
+
     
     male, female = get_gender_counts()
     if male is None or female is None:
