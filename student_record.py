@@ -86,6 +86,7 @@ def show_student_record():
         table.insert("", "end", values=record)
 
     from main import admin_interface
+    
     tk.Button(root, text="Edit Record", command=edit_students_record).pack(pady=10)
     tk.Button(root, text="Back", command=admin_interface).pack(pady=10)
 

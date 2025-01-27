@@ -6,7 +6,7 @@ from tkinter import ttk
 # Buttons in the main window
 root = tk.Tk()
 root.title("School Management System")
-root.geometry("1650x1000")
+root.geometry("1000x800")
 root.config(bg="Light Blue")
 
 def main_page():
